@@ -76,7 +76,7 @@ with Profiler() as prof, ResourceProfiler() as rprof:
 visualize([prof, rprof])
 
 
-# In[19]:
+# In[23]:
 
 
 # Size of vocabulary
@@ -95,7 +95,7 @@ text_data = ddf['post']
 num_examples = len(ddf)
 
 # Number of examples per class
-examples_per_class = ddf['political_leaning'].value_counts()
+examples_per_class = ddf['political_leaning'].value_counts().compute()
 
 # Tokenize the text data
 all_tokens = [word_tokenize(text) for text in text_data]
@@ -114,7 +114,74 @@ with ProgressBar():
     ddf_normalized = dd.compute(ddf_normalized, scheduler='processes', num_workers=num_processes)
 
 
-# In[4]:
+# In[30]:
+
+
+# Vocabulary size and visualizations
+
+import dask.dataframe as dd
+from dask.diagnostics import ProgressBar
+from nltk.tokenize import word_tokenize
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read CSV with increased blocksize and reduced sample
+ddf = dd.read_csv('D:\Language&AI\Assign.Data\lai-data\political_leaning.csv', blocksize="4MB", sample=33)
+text_data = ddf['post']
+
+# Number of examples
+num_examples = len(ddf)
+
+# Number of examples per class
+examples_per_class = ddf['political_leaning'].value_counts().compute()
+
+# Tokenize the text data
+all_tokens = [word_tokenize(text) for text in text_data]
+
+# Vocabulary size
+vocabulary_size = len(set([word.lower() for tokens in all_tokens for word in tokens]))
+
+# Display summary statistics
+print(f"Number of Examples: {num_examples}")
+print("\nExamples per Class:")
+print(examples_per_class)
+print(f"\nVocabulary Size: {vocabulary_size}")
+
+# Visualizations
+plt.figure(figsize=(12, 6))
+
+# Plot examples per class
+plt.subplot(1, 2, 1)
+sns.barplot(x=examples_per_class.index, y=examples_per_class.values)
+plt.title('Examples per Class')
+plt.xlabel('Political Leaning')
+plt.ylabel('Number of Examples')
+
+
+plt.tight_layout()
+plt.show()
+
+
+# In[34]:
+
+
+# Visualizations
+plt.figure(figsize=(12, 6))
+
+# Plot examples per class
+plt.subplot(1, 2, 1)
+sns.barplot(x=examples_per_class.index, y=examples_per_class.values)
+plt.title('Examples per Class')
+plt.xlabel('Political Leaning')
+plt.ylabel('Number of Examples')
+
+
+plt.tight_layout()
+plt.show()
+
+
+# In[ ]:
 
 
 # Word2Vec training, logistic regression, Naive Bayes
@@ -190,6 +257,60 @@ print(f"Accuracy: {accuracy_nb}")
 print(f"Precision: {precision_nb}")
 print(f"Recall: {recall_nb}")
 print(f"F1 Score: {f1_nb}")
+
+
+# In[32]:
+
+
+get_ipython().system('pip install wordcloud')
+
+
+# In[33]:
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
+from wordcloud import WordCloud
+
+# Visualize Logistic Regression Confusion Matrix
+cm_logreg = confusion_matrix(labels_test, predictions_logreg)
+sns.heatmap(cm_logreg, annot=True, fmt="d", cmap="Blues", xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_)
+plt.title('Logistic Regression Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.show()
+
+# Visualize Naive Bayes Confusion Matrix
+cm_nb = confusion_matrix(labels_test, predictions_nb)
+sns.heatmap(cm_nb, annot=True, fmt="d", cmap="Blues", xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_)
+plt.title('Naive Bayes Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.show()
+
+# Classification Report for Logistic Regression
+print("Logistic Regression Classification Report:")
+print(classification_report(labels_test, predictions_logreg, target_names=label_encoder.classes_))
+
+# Classification Report for Naive Bayes
+print("\nNaive Bayes Classification Report:")
+print(classification_report(labels_test, predictions_nb, target_names=label_encoder.classes_))
+
+# Visualize Word Cloud for each political leaning class
+for political_leaning in label_encoder.classes_:
+    # Extract text for the current class
+    class_text = ' '.join([text for text, label in zip(data_test_str, labels_test) if label_encoder.classes_[label] == political_leaning])
+    
+    # Generate Word Cloud
+    wordcloud = WordCloud(width = 800, height = 400, random_state=42, max_font_size=100).generate(class_text)
+    
+    # Plot Word Cloud
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis('off')
+    plt.title(f'Word Cloud for {political_leaning} Class')
+    plt.show()
 
 
 # In[8]:
@@ -303,22 +424,6 @@ plt.title('Decision Tree Confusion Matrix')
 plt.xlabel('Predicted')
 plt.ylabel('True')
 plt.show()
-
-print(f"Random Forest Accuracy: {accuracy_rf}")
-print(f"Random Forest Precision: {rf_precision}")
-print(f"Random Forest Recall: {rf_recall}")
-print(f"Random Forest F1 Score: {rf_f1}")
-print(f"Random Forest Confusion Matrix:\n{rf_confusion_matrix}")
-
-print(f"Decision Tree Accuracy: {accuracy_dt}")
-print(f"Decision Tree Precision: {dt_precision}")
-print(f"Decision Tree Recall: {dt_recall}")
-print(f"Decision Tree F1 Score: {dt_f1}")
-print(f"Decision Tree Confusion Matrix:\n{dt_confusion_matrix}")
-
-
-# In[9]:
-
 
 print(f"Random Forest Accuracy: {accuracy_rf}")
 print(f"Random Forest Precision: {rf_precision}")
